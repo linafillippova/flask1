@@ -3,9 +3,14 @@ from functools import lru_cache
 from flask import Flask, render_template
 from faker import Faker
 
+from flask import request, make_response, redirect, url_for
+from forms import PhoneForm
+
 fake = Faker()
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'qWpoirec23@geG0r00'
+
 application = app
 
 images_ids = ['7d4e9175-95ea-4c5f-8be5-92a6b708bb3c',
@@ -20,7 +25,7 @@ def generate_comments(replies=True):
         comment = {
             'author': fake.name(),
             'text': fake.text(),
-            'date': fake.date_time_between(start_date='-2y', end_date='now')  # Добавлена генерация даты для комментария
+            'date': fake.date_time_between(start_date='-2y', end_date='now')
         }
         if replies:
             comment['replies'] = generate_comments(replies=False)
@@ -66,4 +71,35 @@ def post(post_id):
 def about():
     return render_template('about.html', title='Об авторе')
 
+@app.route('/url_params')
+def url_params():
+    return render_template('url_params.html', params=request.args)
 
+@app.route('/headers')
+def headers():
+    return render_template('headers.html', headers=request.headers)
+
+@app.route('/cookies')
+def cookies():
+    value = request.cookies.get('my_cookie')
+    response = make_response(render_template('cookies.html', my_cookie=value))
+
+    if value:
+        response.delete_cookie('my_cookie')
+    else:
+        response.set_cookie('my_cookie', 'My Cookie Value')
+
+    return response
+
+@app.route('/form', methods=['GET', 'POST'])
+def phone_form():
+    form = PhoneForm()
+    formatted_number = None
+
+    if form.validate_on_submit():
+        try:
+            formatted_number = form.validate_phone_number(form.phone_number)
+        except ValidationError as e:
+            form.phone_number.errors.append(str(e))
+
+    return render_template('form.html', form=form, formatted_number=formatted_number)
