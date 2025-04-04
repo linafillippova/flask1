@@ -4,7 +4,7 @@ from flask import Flask, render_template
 from faker import Faker
 
 from flask import request, make_response, redirect, url_for
-from forms import PhoneForm
+from .forms import PhoneForm
 
 fake = Faker()
 
