@@ -6,12 +6,11 @@ from faker import Faker
 from flask import request, make_response, redirect, url_for
 from .forms import PhoneForm
 
-fake = Faker()
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'qWpoirec23@geG0r00'
 
 application = app
+
+fake = Faker()
 
 images_ids = ['7d4e9175-95ea-4c5f-8be5-92a6b708bb3c',
               '2d2ab7df-cdbc-48a8-a936-35bba702def5',
@@ -71,35 +70,38 @@ def post(post_id):
 def about():
     return render_template('about.html', title='Об авторе')
 
+@app.route('/form', methods=['GET', 'POST'])
+def phone_form():
+    form = PhoneForm(request.form) # Передаем данные из request.form
+    formatted_number = None
+
+    if request.method == 'POST':
+        if form.validate():
+            try:
+                formatted_number = form.validate_phone_number(form.phone_number)
+            except ValidationError as e:
+                form.phone_number.errors.append(str(e))
+
+    return render_template('form.html', form=form, formatted_number=formatted_number)
+
 @app.route('/url_params')
 def url_params():
-    return render_template('url_params.html', params=request.args)
+    return render_template('url_params.html')
 
 @app.route('/headers')
 def headers():
-    return render_template('headers.html', headers=request.headers)
+    return render_template('headers.html')
+
 
 @app.route('/cookies')
 def cookies():
-    value = request.cookies.get('my_cookie')
-    response = make_response(render_template('cookies.html', my_cookie=value))
-
-    if value:
-        response.delete_cookie('my_cookie')
+    resp = make_response(render_template('cookies.html'))
+    if 'name' not in request.cookies:
+        resp.set_cookie('name', 'Bob')
     else:
-        response.set_cookie('my_cookie', 'My Cookie Value')
+        resp.set_cookie('name', expires=0)
+    return resp
 
-    return response
-
-@app.route('/form', methods=['GET', 'POST'])
-def phone_form():
-    form = PhoneForm()
-    formatted_number = None
-
-    if form.validate_on_submit():
-        try:
-            formatted_number = form.validate_phone_number(form.phone_number)
-        except ValidationError as e:
-            form.phone_number.errors.append(str(e))
-
-    return render_template('form.html', form=form, formatted_number=formatted_number)
+@app.route('/form_params', methods=['GET', 'POST'])
+def form_params():
+    return render_template('form_params.html')

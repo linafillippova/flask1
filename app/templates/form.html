@@ -5,7 +5,6 @@
 {% block content %}
     <h1>Проверка номера телефона</h1>
     <form method="POST">
-        {{ form.csrf_token }}
         <div class="mb-3">
             {{ form.phone_number.label(class="form-label") }}
             {{ form.phone_number(class_="form-control " + ("is-invalid" if form.phone_number.errors else "")) }}
